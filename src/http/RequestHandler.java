@@ -74,45 +74,48 @@ public class RequestHandler extends Thread {
 	
 	// http/1.1 200 OK \r\n    -Get방식 호출 
 	private void responseStaticResource( OutputStream os, String url, String protocol ) throws IOException {
+		//Get일 경우 요청한 URL 찍어보기 
+		consoleLog("GET-URL : "+url);
+		
+		//디폴트 경로 설정 
 		if ("/".equals( url) ) {
 			url = "/index.html";
 		}
 		
+		//임시(혼자)로 login페이지이동시 join.html을 연결해보자
+		if ("/user/login.html".equals( url )) {
+			url = "/user/join.html";
+		}
+		
+		//파일 확인
 		File file = new File( DOCUMENT_ROOT + url );
-		sendResponse(file, os, url, protocol, "200 OK");
+		if( file.exists() == false ) {
+			//파일이 존재하지 않아..
+			consoleLog("#404 Error");
+			response404Error(os, protocol);
+			return;
+		}
+		
+		sendResponse(file, os,  protocol, "200 OK");
 	}
 	
 	
 	// http/1.1 400 bad request \r\n
 	private void response400Error( OutputStream os, String protocol) throws IOException {
-		String url = ERROR_400_ROOT;
-		
-		File file = new File(DOCUMENT_ROOT + url);
-		sendResponse(file, os, url, protocol, "400 BAD Request");
+		File file = new File(DOCUMENT_ROOT + ERROR_400_ROOT);
+		sendResponse(file, os,  protocol, "400 BAD Request");
 	}
 	
 	
 	// HTTP/1.1 404 file not found \r\n
 	private void response404Error( OutputStream os, String protocol) throws IOException {
-		String url = ERROR_404_ROOT;
-		
-		File file = new File(DOCUMENT_ROOT + url);
-		sendResponse(file, os, url, protocol, "404 File NotFound");
+		File file = new File(DOCUMENT_ROOT + ERROR_404_ROOT);
+		sendResponse(file, os, protocol, "404 File NotFound");
 	}
 	
 		
 	//해당 파일 존재유무 확인 및 헤더/바디 데이터 전송 
-	private void sendResponse(File file, OutputStream os, String url, String protocol, String msg) throws IOException {
-		if( file.exists() == false ) {
-			//파일이 존재하지 않아..
-			consoleLog("#404 Error");
-			//여기...404가 문제 있으면 무한루프야...
-			if ( !"404 File NotFound".equals(msg) ) {
-				response404Error(os, protocol);
-			}
-			return;
-		}
-		
+	private void sendResponse(File file, OutputStream os, String protocol, String msg) throws IOException {
 		byte[] body = Files.readAllBytes(file.toPath());
 		String mimeType = Files.probeContentType( file.toPath() );
 		
@@ -120,6 +123,7 @@ public class RequestHandler extends Thread {
 		os.write( (protocol+" "+msg+" \r\n").getBytes( "UTF-8" ) );
 		os.write( ("Content-Type:"+mimeType+"; charset=utf-8\r\n").getBytes( "UTF-8" ) );
 		os.write( "\r\n".getBytes() );
+		
 		// body 전송
 		os.write( body );
 	}
