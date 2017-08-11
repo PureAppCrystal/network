@@ -1,10 +1,19 @@
 package thread;
 
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+
 public class MultiTreadExample {
 
 	public static void main(String[] args) {
 		
-		Thread th1 = new AlphabetThread();
+		List<PrintWriter> list = new ArrayList<PrintWriter>();
+		
+		
+		
+		Thread th1 = new AlphabetThread(null, list);
+		//Thread th1 = new AlphabetThread();
 		th1.start();
 		
 		
